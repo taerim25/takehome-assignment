@@ -53,23 +53,16 @@ def mirror(name):
 
 @app.route("/shows", methods=['GET'])
 def get_all_shows():
-    name =request.args.get('name')
-    episodes_seen = request.args.get('episodes_seen')
+    minEpisodes = request.args.get('minEpisodes')
     param = {}
-    if name is not None:
-        param['name'] = name
-    if episodes_seen is not None:
-        param['episodes_seen'] = int(episodes_seen)
+    if minEpisodes is not None:
+        param['minEpisodes'] = int(minEpisodes)
+    else:
+        return create_response({'shows':db.get('shows')})
     data = db.get('shows')
-    if name is None and episodes_seen is None:
-        return create_response({'shows':data })
     filtered_data =[]
     for i in data:
-        ispass=True
-        for k in param:
-            if i[k] != param[k]:
-                ispass=False
-        if ispass == True:
+        if i['episodes_seen'] >= param['minEpisodes']:
             filtered_data.append(i)   
     if filtered_data == []:
         return create_response(status=404, message= "No show with these parameters exists")
