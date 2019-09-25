@@ -53,7 +53,27 @@ def mirror(name):
 
 @app.route("/shows", methods=['GET'])
 def get_all_shows():
-    return create_response({"shows": db.get('shows')})
+    name =request.args.get('name')
+    episodes_seen = request.args.get('episodes_seen')
+    param = {}
+    if name is not None:
+        param['name'] = name
+    if episodes_seen is not None:
+        param['episodes_seen'] = int(episodes_seen)
+    data = db.get('shows')
+    if name is None and episodes_seen is None:
+        return create_response({'shows':data })
+    filtered_data =[]
+    for i in data:
+        ispass=True
+        for k in param:
+            if i[k] != param[k]:
+                ispass=False
+        if ispass == True:
+            filtered_data.append(i)   
+    if filtered_data == []:
+        return create_response(status=404, message= "No show with these parameters exists")
+    return create_response({"shows": filtered_data })
 
 @app.route("/shows/<id>", methods=['DELETE'])
 def delete_show(id):
@@ -61,10 +81,34 @@ def delete_show(id):
         return create_response(status=404, message="No show with this id exists")
     db.deleteById('shows', int(id))
     return create_response(message="Show deleted")
-
-
 # TODO: Implement the rest of the API here!
 
+@app.route("/shows/<id>", methods = ['GET'])
+def get_show(id):
+    if db.getById('shows',int(id) ) is None:
+        return create_response(status=404, message="No show with this id exists")
+    return create_response({"show": db.getById('shows',int(id) )})
+
+@app.route("/shows",methods=['POST'] )
+def new_show():
+    name = request.args.get('name')
+    episodes_seen = request.args.get('episodes_seen')
+    db.create('shows',{"name": name,"episodes_seen":int(episodes_seen)})
+    return create_response(message='show created')
+
+@app.route("/shows/<id>",methods =["PUT"])
+def update_show(id):
+    if db.getById('shows',int(id) ) is None:
+        return create_response(status=404, message="No show with this id exists")
+    name =request.args.get('name')
+    episodes_seen = request.args.get('episodes_seen')
+    param = {}
+    if name is not None:
+        param['name'] = name
+    if episodes_seen is not None:
+        param['episodes_seen'] = int(episodes_seen)
+    db.updateById('shows', int(id), param  )
+    return create_response(message= 'update successful')
 """
 ~~~~~~~~~~~~ END API ~~~~~~~~~~~~
 """
